@@ -24,6 +24,7 @@
 #include <avahi-core/lookup.h>
 
 #include <memory>
+#include <vector>
 
 namespace cast {
 
@@ -38,7 +39,11 @@ public:
     QVariant data(const QModelIndex &index, int role) const override;
 
     enum Roles {
-        Role
+        RoleServiceName,
+        RoleHostName,
+        RoleAddress,
+        RolePort,
+        RoleTxt,
     };
     Q_ENUM(Roles);
 
@@ -50,11 +55,22 @@ private:
     void setServiceType(QString type);
 
     void startBrowsing();
+    void addService(AvahiIfIndex iface,
+                    AvahiProtocol protocol,
+                    const char *name,
+                    const char *type,
+                    const char *domain);
+    void removeService(const char *name);
+    void updateService(const char *name,
+                       const char *host_name,
+                       const AvahiAddress *a,
+                       uint16_t port,
+                       AvahiStringList *txt);
 
-    static void serverCallback(AvahiServer *server,
+    static void serverCallback(AvahiServer *s,
                                AvahiServerState state,
                                void *userdata) noexcept;
-    static void browserCallback(AvahiSServiceBrowser *browser,
+    static void browserCallback(AvahiSServiceBrowser *b,
                                 AvahiIfIndex iface,
                                 AvahiProtocol protocol,
                                 AvahiBrowserEvent event,
@@ -63,6 +79,21 @@ private:
                                 const char *domain,
                                 AvahiLookupResultFlags flags,
                                 void *userdata)  noexcept;
+    static void resolverCallback(AvahiSServiceResolver *r,
+                                 AvahiIfIndex iface,
+                                 AvahiProtocol protocol,
+                                 AvahiResolverEvent event,
+                                 const char *name,
+                                 const char*type,
+                                 const char *domain,
+                                 const char *host_name,
+                                 const AvahiAddress *a,
+                                 uint16_t port,
+                                 AvahiStringList *txt,
+                                 AvahiLookupResultFlags flags,
+                                 void *userdata) noexcept;
+
+    QHash<int, QByteArray> roles;
 
     std::unique_ptr<AvahiGLibPoll, decltype(&avahi_glib_poll_free)> poll_
         {nullptr, avahi_glib_poll_free};
@@ -71,6 +102,9 @@ private:
     std::unique_ptr<AvahiSServiceBrowser, decltype(&avahi_s_service_browser_free)> browser_
         {nullptr, avahi_s_service_browser_free};
     QString service_type_;
+
+    struct Service;
+    std::vector<Service> services_;
 };
 
 }
