@@ -1,5 +1,8 @@
 
+include(FindPkgConfig)
+find_package(Qt5Core REQUIRED)
 find_package(Protobuf REQUIRED)
+pkg_check_modules(AVAHI REQUIRED glib-2.0 avahi-core avahi-glib)
 
 include_directories(${PROTOBUF_INCLUDE_DIRS})
 add_definitions(-DQT_NO_KEYWORDS ${AVAHI_CFLAGS})
@@ -15,7 +18,9 @@ add_library(cast-qml MODULE
   )
 set_target_properties(cast-qml PROPERTIES
   AUTOMOC TRUE
-  LINK_FLAGS "-Wl,--no-undefined")
+  NO_SONAME TRUE
+  LINK_FLAGS "-Wl,--no-undefined"
+  COMPILE_FLAGS "-fvisibility=hidden")
 qt5_use_modules(cast-qml Core Qml)
 target_link_libraries(cast-qml ${AVAHI_LDFLAGS} ${PROTOBUF_LITE_LIBRARIES})
 
