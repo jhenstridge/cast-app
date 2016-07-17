@@ -13,6 +13,8 @@ protobuf_generate_cpp(
 add_library(cast-qml MODULE
   plugin.cpp
   browser.cpp
+  caster.cpp
+  channel.cpp
   ${generated_sources}
   ${generated_headers}
   )

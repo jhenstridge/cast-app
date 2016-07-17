@@ -16,18 +16,37 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "plugin.h"
-#include "browser.h"
+#pragma once
+
 #include "caster.h"
-#include "channel.h"
+
+#include <QByteArray>
+#include <QObject>
+#include <QString>
 
 namespace cast {
 
-void CastPlugin::registerTypes(const char *uri) {
-    qmlRegisterType<Browser>(uri, 0, 1, "Browser");
-    qmlRegisterType<Caster>(uri, 0, 1, "Caster");
-    qmlRegisterUncreatableType<Channel>(uri, 0, 1, "Channel",
-                                        "Use a Caster to create channels");
-}
+class Channel : public QObject {
+    Q_OBJECT
+public:
+    Channel(Caster *caster, const QString& source_id,
+            const QString& destination_id, const QString& channel_namespace);
+    virtual ~Channel();
+
+    Q_INVOKABLE bool send(const QString& data);
+    Q_INVOKABLE bool sendBinary(const QByteArray& data);
+
+Q_SIGNALS:
+    void messageReceived(const QString& data);
+    void binaryMessageReceived(const QByteArray& data);
+
+private Q_SLOTS:
+    void onMessageReceived(const Caster::Message& message);
+
+private:
+    const QString source_id_;
+    const QString destination_id_;
+    const QString namespace_;
+};
 
 }
