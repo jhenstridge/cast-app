@@ -43,15 +43,14 @@ public:
     Q_INVOKABLE void connectToHost(const QString& host_name, int port);
     Q_INVOKABLE void disconnectFromHost();
 
-    Q_INVOKABLE Channel* createChannel(const QString& source_id,
-                                       const QString& destination_id);
+    Q_INVOKABLE cast::Channel* createChannel(const QString& source_id,
+                                             const QString& destination_id);
 
     bool sendMessage(const Message& message);
 
 Q_SIGNALS:
     void connected();
     void disconnected();
-    void messageReceived(const Message& message);
 
 private Q_SLOTS:
     void onEncrypted();
