@@ -15,6 +15,9 @@ add_library(cast-qml MODULE
   browser.cpp
   caster.cpp
   channel.cpp
+  connection-channel.cpp
+  heartbeat-channel.cpp
+  receiver-channel.cpp
   ${generated_sources}
   ${generated_headers}
   )

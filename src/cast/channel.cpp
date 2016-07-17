@@ -57,8 +57,9 @@ bool Channel::sendBinary(const QByteArray& data) {
 
 void Channel::onMessageReceived(const Caster::Message& message) {
     if (message.protocol_version() != Caster::Message::CASTV2_1_0) return;
-    if (message.source_id() != source_id_.toStdString()) return;
-    if (message.destination_id() != destination_id_.toStdString()) return;
+    if (message.source_id() != destination_id_.toStdString()) return;
+    if (!(message.destination_id() == "*" ||
+          message.destination_id() == source_id_.toStdString())) return;
     if (message.namespace_() != namespace_.toStdString()) return;
 
     switch (message.payload_type()) {

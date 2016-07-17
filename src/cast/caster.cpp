@@ -17,6 +17,10 @@
 */
 
 #include "caster.h"
+#include "connection-channel.h"
+#include "heartbeat-channel.h"
+#include "receiver-channel.h"
+
 #include <QtEndian>
 
 namespace cast {
@@ -29,12 +33,27 @@ Caster::Caster(QObject *parent) : QObject(parent) {
             this, &Caster::onReadyRead);
     connect(&socket_, &QIODevice::readChannelFinished,
             this, &Caster::onReadChannelFinished);
+
+    connection_ = new ConnectionChannel(this, "sender-0", "receiver-0");
+    heartbeat_ = new HeartbeatChannel(this, "sender-0", "receiver-0");
+    receiver_ = new ReceiverChannel(this, "sender-0", "receiver-0");
 }
 
 Caster::~Caster() = default;
 
 void Caster::connectToHost(const QString &host_name, uint16_t port) {
     socket_.connectToHostEncrypted(host_name, port);
+}
+
+void Caster::disconnectFromHost() {
+    socket_.disconnectFromHost();
+    Q_EMIT disconnected();
+}
+
+Channel* Caster::createChannel(const QString& sender_id,
+                               const QString& destination_id,
+                               const QString& channel_namespace) {
+    return new Channel(this, sender_id, destination_id, channel_namespace);
 }
 
 void Caster::onEncrypted() {
@@ -87,8 +106,7 @@ void Caster::onReadyRead() {
 }
 
 void Caster::onReadChannelFinished() {
-    socket_.disconnectFromHost();
-    Q_EMIT disconnected();
+    disconnectFromHost();
 }
 
 bool Caster::sendMessage(const Message& message) {

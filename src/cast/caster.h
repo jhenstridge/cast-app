@@ -28,6 +28,11 @@
 
 namespace cast {
 
+class Channel;
+class ConnectionChannel;
+class HeartbeatChannel;
+class ReceiverChannel;
+
 class Caster : public QObject {
     Q_OBJECT
 public:
@@ -37,6 +42,11 @@ public:
     virtual ~Caster();
 
     Q_INVOKABLE void connectToHost(const QString& host_name, uint16_t port);
+    Q_INVOKABLE void disconnectFromHost();
+
+    Q_INVOKABLE Channel* createChannel(const QString& sender_id,
+                                       const QString& destination_id,
+                                       const QString& channel_namespace);
 
     bool sendMessage(const Message& message);
 
@@ -60,6 +70,10 @@ private:
     uint32_t message_read_ = 0;
     QByteArray message_data_;
     Message received_message_;
+
+    ConnectionChannel *connection_;
+    HeartbeatChannel *heartbeat_;
+    ReceiverChannel *receiver_;
 };
 
 }
