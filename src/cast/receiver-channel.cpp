@@ -18,6 +18,10 @@
 
 #include "receiver-channel.h"
 
+#include <QDebug>
+#include <QJsonDocument>
+#include <QJsonObject>
+
 namespace cast {
 
 const QString ReceiverChannel::URN = QStringLiteral("urn:x-cast:com.google.cast.receiver");
@@ -32,18 +36,33 @@ ReceiverChannel::ReceiverChannel(Caster *caster, const QString& source_id,
 ReceiverChannel::~ReceiverChannel() = default;
 
 bool ReceiverChannel::launch(const QString& app_id) {
-    return false;
+    QJsonObject msg;
+    msg["type"] = QStringLiteral("LAUNCH");
+    msg["requestId"] = 1;
+    msg["appId"] = app_id;
+    QJsonDocument doc(msg);
+    return send(QString(doc.toJson(QJsonDocument::Compact)));
 }
 
-bool stop(const QString& session_id) {
-    return false;
+bool ReceiverChannel::stop(const QString& session_id) {
+    QJsonObject msg;
+    msg["type"] = QStringLiteral("STOP");
+    msg["requestId"] = 1;
+    msg["sessionId"] = session_id;
+    QJsonDocument doc(msg);
+    return send(QString(doc.toJson(QJsonDocument::Compact)));
 }
 
-bool getStatus() {
-    return false;
+bool ReceiverChannel::getStatus() {
+    QJsonObject msg;
+    msg["type"] = QStringLiteral("GET_STATUS");
+    msg["requestId"] = 1;
+    QJsonDocument doc(msg);
+    return send(QString(doc.toJson(QJsonDocument::Compact)));
 }
 
 void ReceiverChannel::onMessageReceived(const QString& data) {
+    qInfo() << "Received message:" << data;
 }
 
 }

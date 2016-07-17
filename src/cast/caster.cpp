@@ -22,6 +22,7 @@
 #include "receiver-channel.h"
 
 #include <QtEndian>
+#include <QDebug>
 
 namespace cast {
 
@@ -41,11 +42,12 @@ Caster::Caster(QObject *parent) : QObject(parent) {
 
 Caster::~Caster() = default;
 
-void Caster::connectToHost(const QString &host_name, uint16_t port) {
+void Caster::connectToHost(const QString &host_name, int port) {
     socket_.connectToHostEncrypted(host_name, port);
 }
 
 void Caster::disconnectFromHost() {
+    qInfo() << "Disconnecting";
     socket_.disconnectFromHost();
     Q_EMIT disconnected();
 }
@@ -57,7 +59,10 @@ Channel* Caster::createChannel(const QString& sender_id,
 }
 
 void Caster::onEncrypted() {
+    qInfo() << "Connected";
     Q_EMIT connected();
+    connection_->sendConnect();
+    receiver_->launch("YouTube");
 }
 
 void Caster::onReadyRead() {
@@ -91,6 +96,15 @@ void Caster::onReadyRead() {
             if (message_read_ == message_size_) {
                 if (received_message_.ParseFromArray(
                         message_data_.constData(), message_data_.size())) {
+
+    qInfo() << "Received message:";
+    qInfo() << "  source:" << received_message_.source_id().c_str();
+    qInfo() << "  destination:" << received_message_.destination_id().c_str();
+    qInfo() << "  namespace:" << received_message_.namespace_().c_str();
+    if (received_message_.payload_type() == Message::STRING) {
+        qInfo() << "  payload:" << received_message_.payload_utf8().c_str();
+    }
+
                     Q_EMIT messageReceived(received_message_);
                 } else {
                     qWarning() << "Could not parse incoming message";
@@ -117,6 +131,14 @@ bool Caster::sendMessage(const Message& message) {
                            reinterpret_cast<unsigned char*>(data.data()));
     if (!message.SerializeToArray(data.data() + 4, msg_size)) {
         return false;
+    }
+
+    qInfo() << "Sending message:";
+    qInfo() << "  source:" << message.source_id().c_str();
+    qInfo() << "  destination:" << message.destination_id().c_str();
+    qInfo() << "  namespace:" << message.namespace_().c_str();
+    if (message.payload_type() == Message::STRING) {
+        qInfo() << "  payload:" << message.payload_utf8().c_str();
     }
     return socket_.write(data) == data.size();
 }

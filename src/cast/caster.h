@@ -41,7 +41,7 @@ public:
     explicit Caster(QObject *parent=nullptr);
     virtual ~Caster();
 
-    Q_INVOKABLE void connectToHost(const QString& host_name, uint16_t port);
+    Q_INVOKABLE void connectToHost(const QString& host_name, int port);
     Q_INVOKABLE void disconnectFromHost();
 
     Q_INVOKABLE Channel* createChannel(const QString& sender_id,
