@@ -24,8 +24,6 @@
 #include <QObject>
 #include <QString>
 
-#include <string>
-
 namespace cast {
 
 class Channel;
@@ -33,7 +31,7 @@ class Channel;
 class Interface : public QObject {
     Q_OBJECT
 public:
-    Interface(Channel *channel, const std::string& namespace_);
+    Interface(Channel *channel, const QString& ns);
     virtual ~Interface();
 
     Q_INVOKABLE bool send(const QString& data);
@@ -50,7 +48,7 @@ protected:
 private:
     void handleMessage(const Caster::Message& message);
 
-    const std::string namespace_;
+    const QString namespace_;
 
     friend class Channel;
 };

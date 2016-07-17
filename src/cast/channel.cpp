@@ -24,17 +24,16 @@
 
 namespace cast {
 
-Channel::Channel(Caster *caster, const std::string& source_id,
-                 const std::string& destination_id)
+Channel::Channel(Caster *caster, const QString& source_id,
+                 const QString& destination_id)
     : QObject(caster), source_id_(source_id),
       destination_id_(destination_id) {
-    addInterface(QString::fromStdString(ConnectionInterface::URN));
+    addInterface(ConnectionInterface::URN);
 }
 
 Channel::~Channel() = default;
 
-cast::Interface* Channel::addInterface(const QString& namespace_) {
-    std::string ns = namespace_.toStdString();
+cast::Interface* Channel::addInterface(const QString& ns) {
     Interface *iface;
 
     try {
@@ -76,8 +75,9 @@ const Caster& Channel::caster() const {
 }
 
 void Channel::handleMessage(const Caster::Message& message) {
+    const QString ns = QString::fromStdString(message.namespace_());
     try {
-        interfaces_.at(message.namespace_())->handleMessage(message);
+        interfaces_.at(ns)->handleMessage(message);
     } catch (const std::out_of_range &) {
         qWarning() << "Message received for unknown namespace:"
                    << QString::fromStdString(message.namespace_());

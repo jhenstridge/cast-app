@@ -20,11 +20,8 @@
 
 #include "caster.h"
 
-#include <QByteArray>
 #include <QObject>
 #include <QString>
-
-#include <string>
 
 namespace cast {
 
@@ -33,8 +30,8 @@ class Interface;
 class Channel : public QObject {
     Q_OBJECT
 public:
-    Channel(Caster *caster, const std::string& source_id,
-            const std::string& destination_id);
+    Channel(Caster *caster, const QString& source_id,
+            const QString& destination_id);
     virtual ~Channel();
 
     Q_INVOKABLE cast::Interface* addInterface(const QString& namespace_);
@@ -48,11 +45,11 @@ private:
     const Caster& caster() const;
     void handleMessage(const Caster::Message& message);
 
-    const std::string source_id_;
-    const std::string destination_id_;
+    const QString source_id_;
+    const QString destination_id_;
 
     bool closed_ = false;
-    std::map<std::string,Interface*> interfaces_;
+    std::map<QString,Interface*> interfaces_;
 
     friend class Caster;
     friend class Interface;

@@ -28,7 +28,7 @@ public:
     ReceiverInterface(Channel *channel);
     virtual ~ReceiverInterface();
 
-    static const std::string URN;
+    static const QString URN;
 
     bool launch(const QString& app_id);
     bool stop(const QString& session_id);

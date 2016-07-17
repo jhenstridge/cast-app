@@ -20,7 +20,7 @@
 
 namespace cast {
 
-const std::string HeartbeatInterface::URN = "urn:x-cast:com.google.cast.tp.heartbeat";
+const QString HeartbeatInterface::URN = QStringLiteral("urn:x-cast:com.google.cast.tp.heartbeat");
 
 HeartbeatInterface::HeartbeatInterface(Channel *channel)
     : Interface(channel, URN) {

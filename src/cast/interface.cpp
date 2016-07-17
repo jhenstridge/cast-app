@@ -21,8 +21,8 @@
 
 namespace cast {
 
-Interface::Interface(Channel *channel, const std::string& namespace_)
-    : QObject(channel), namespace_(namespace_) {
+Interface::Interface(Channel *channel, const QString& ns)
+    : QObject(channel), namespace_(ns) {
 }
 
 Interface::~Interface() = default;
@@ -38,9 +38,9 @@ const Channel& Interface::channel() const {
 bool Interface::send(const QString& data) {
     Caster::Message message;
     message.set_protocol_version(Caster::Message::CASTV2_1_0);
-    message.set_source_id(channel().source_id_);
-    message.set_destination_id(channel().destination_id_);
-    message.set_namespace_(namespace_);
+    message.set_source_id(channel().source_id_.toStdString());
+    message.set_destination_id(channel().destination_id_.toStdString());
+    message.set_namespace_(namespace_.toStdString());
     message.set_payload_type(Caster::Message::STRING);
     message.set_payload_utf8(data.toStdString());
     return channel().caster().sendMessage(message);
@@ -49,9 +49,9 @@ bool Interface::send(const QString& data) {
 bool Interface::sendBinary(const QByteArray& data) {
     Caster::Message message;
     message.set_protocol_version(Caster::Message::CASTV2_1_0);
-    message.set_source_id(channel().source_id_);
-    message.set_destination_id(channel().destination_id_);
-    message.set_namespace_(namespace_);
+    message.set_source_id(channel().source_id_.toStdString());
+    message.set_destination_id(channel().destination_id_.toStdString());
+    message.set_namespace_(namespace_.toStdString());
     message.set_payload_type(Caster::Message::BINARY);
     message.set_payload_binary(data.constData(), data.size());
     return channel().caster().sendMessage(message);

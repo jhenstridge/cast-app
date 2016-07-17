@@ -28,7 +28,7 @@ public:
     ConnectionInterface(Channel *channel);
     virtual ~ConnectionInterface();
 
-    static const std::string URN;
+    static const QString URN;
 
 private Q_SLOTS:
     void onMessageReceived(const QString& data);

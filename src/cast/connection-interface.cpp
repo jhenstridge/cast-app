@@ -25,7 +25,7 @@
 
 namespace cast {
 
-const std::string ConnectionInterface::URN = "urn:x-cast:com.google.cast.tp.connection";
+const QString ConnectionInterface::URN = QStringLiteral("urn:x-cast:com.google.cast.tp.connection");
 
 ConnectionInterface::ConnectionInterface(Channel *channel)
     : Interface(channel, URN) {

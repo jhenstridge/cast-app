@@ -25,7 +25,6 @@
 
 #include <cstdint>
 #include <map>
-#include <string>
 #include <utility>
 
 namespace cast {
@@ -75,7 +74,7 @@ private:
     Message received_message_;
 
     // Manage communication channels
-    std::map<std::pair<std::string,std::string>,Channel*> channels_;
+    std::map<std::pair<QString,QString>,Channel*> channels_;
     Channel *platform_channel_ = nullptr;
     ReceiverInterface *receiver_ = nullptr;
 };

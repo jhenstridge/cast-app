@@ -24,7 +24,7 @@
 
 namespace cast {
 
-const std::string ReceiverInterface::URN = "urn:x-cast:com.google.cast.receiver";
+const QString ReceiverInterface::URN = QStringLiteral("urn:x-cast:com.google.cast.receiver");
 
 ReceiverInterface::ReceiverInterface(Channel *channel)
     : Interface(channel, URN) {

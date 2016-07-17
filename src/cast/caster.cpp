@@ -46,11 +46,9 @@ void Caster::onEncrypted() {
     qInfo() << "Connected";
     platform_channel_ = createChannel(QStringLiteral("sender-0"),
                                       QStringLiteral("receiver-0"));
-    platform_channel_->addInterface(
-        QString::fromStdString(HeartbeatInterface::URN));
+    platform_channel_->addInterface(HeartbeatInterface::URN);
     receiver_ = static_cast<ReceiverInterface*>(
-        platform_channel_->addInterface(
-            QString::fromStdString(ReceiverInterface::URN)));
+        platform_channel_->addInterface(ReceiverInterface::URN));
     Q_EMIT connected();
     receiver_->getStatus();
 }
@@ -120,15 +118,12 @@ void Caster::onReadChannelFinished() {
 
 Channel* Caster::createChannel(const QString& source_id,
                                const QString& destination_id) {
-    std::string source = source_id.toStdString();
-    std::string destination = destination_id.toStdString();
-
     Channel *channel;
     try {
-        channel = channels_.at({destination, source});
+        channel = channels_.at({destination_id, source_id});
     } catch (const std::out_of_range &) {
-        channel = new Channel(this, source, destination);
-        channels_.emplace(std::make_pair(destination, source), channel);
+        channel = new Channel(this, source_id, destination_id);
+        channels_.emplace(std::make_pair(destination_id, source_id), channel);
         connect(channel, &Channel::closed,
                 this, &Caster::onChannelClosed, Qt::QueuedConnection);
     }
@@ -146,32 +141,25 @@ void Caster::onChannelClosed() {
 }
 
 void Caster::handleMessage(const Message& message) {
-    qInfo() << "Received message:";
-    qInfo() << "  source:" << message.source_id().c_str();
-    qInfo() << "  destination:" << message.destination_id().c_str();
-    qInfo() << "  namespace:" << message.namespace_().c_str();
-    if (message.payload_type() == Message::STRING) {
-        qInfo() << "  payload:" << message.payload_utf8().c_str();
-    }
-
     if (message.protocol_version() != Caster::Message::CASTV2_1_0) {
         qWarning() << "Unsupported protocol version:" << message.protocol_version();
         return;
     }
 
-    if (message.destination_id() == "*") {
+    const QString source = QString::fromStdString(message.source_id());
+    const QString destination = QString::fromStdString(message.destination_id());
+    if (destination == "*") {
         // Broadcast message to all channels connected to the sender
-        for (auto it = channels_.lower_bound({message.source_id(), std::string()}); it != channels_.end(); ++it) {
-            if (it->first.first != message.destination_id()) break;
+        for (auto it = channels_.lower_bound({source, QString()}); it != channels_.end(); ++it) {
+            if (it->first.first != destination) break;
             it->second->handleMessage(message);
         }
     } else {
         try {
-            channels_.at({message.source_id(), message.destination_id()})->handleMessage(message);
+            channels_.at({source, destination})->handleMessage(message);
         } catch (const std::out_of_range &) {
             qWarning() << "Message received for unknown channel:"
-                       << QString::fromStdString(message.source_id()) << "->"
-                       << QString::fromStdString(message.destination_id());
+                       << source << "->" << destination;
         }
     }
 }
@@ -184,14 +172,6 @@ bool Caster::sendMessage(const Message& message) {
                            reinterpret_cast<unsigned char*>(data.data()));
     if (!message.SerializeToArray(data.data() + 4, msg_size)) {
         return false;
-    }
-
-    qInfo() << "Sending message:";
-    qInfo() << "  source:" << message.source_id().c_str();
-    qInfo() << "  destination:" << message.destination_id().c_str();
-    qInfo() << "  namespace:" << message.namespace_().c_str();
-    if (message.payload_type() == Message::STRING) {
-        qInfo() << "  payload:" << message.payload_utf8().c_str();
     }
     return socket_.write(data) == data.size();
 }

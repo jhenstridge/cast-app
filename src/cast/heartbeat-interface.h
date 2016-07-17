@@ -30,7 +30,7 @@ public:
     HeartbeatInterface(Channel *channel);
     virtual ~HeartbeatInterface();
 
-    static const std::string URN;
+    static const QString URN;
 
 private Q_SLOTS:
     void onTimeout();
