@@ -18,28 +18,27 @@
 
 #pragma once
 
-#include "channel.h"
-
-#include <QTimer>
+#include "interface.h"
 
 namespace cast {
 
-class HeartbeatChannel : public Channel {
+class ReceiverInterface : public Interface {
     Q_OBJECT
 public:
-    HeartbeatChannel(Caster *caster, const QString& source_id,
-                     const QString& destination_id);
-    virtual ~HeartbeatChannel();
+    ReceiverInterface(Channel *channel);
+    virtual ~ReceiverInterface();
 
-    static const QString URN;
+    static const std::string URN;
+
+    bool launch(const QString& app_id);
+    bool stop(const QString& session_id);
+    bool getStatus();
 
 private Q_SLOTS:
-    void onConnected();
-    void onDisconnected();
-    void onTimeout();
+    void onMessageReceived(const QString& data);
 
 private:
-    QTimer timer_;
+    int last_request_ = 0;
 };
 
 }

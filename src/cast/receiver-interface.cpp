@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "receiver-channel.h"
+#include "receiver-interface.h"
 
 #include <QDebug>
 #include <QJsonDocument>
@@ -24,44 +24,43 @@
 
 namespace cast {
 
-const QString ReceiverChannel::URN = QStringLiteral("urn:x-cast:com.google.cast.receiver");
+const std::string ReceiverInterface::URN = "urn:x-cast:com.google.cast.receiver";
 
-ReceiverChannel::ReceiverChannel(Caster *caster, const QString& source_id,
-                                 const QString& destination_id)
-    : Channel(caster, source_id, destination_id, URN) {
-    connect(this, &Channel::messageReceived,
-            this, &ReceiverChannel::onMessageReceived);
+ReceiverInterface::ReceiverInterface(Channel *channel)
+    : Interface(channel, URN) {
+    connect(this, &Interface::messageReceived,
+            this, &ReceiverInterface::onMessageReceived);
 }
 
-ReceiverChannel::~ReceiverChannel() = default;
+ReceiverInterface::~ReceiverInterface() = default;
 
-bool ReceiverChannel::launch(const QString& app_id) {
+bool ReceiverInterface::launch(const QString& app_id) {
     QJsonObject msg;
     msg["type"] = QStringLiteral("LAUNCH");
-    msg["requestId"] = 1;
+    msg["requestId"] = ++last_request_;
     msg["appId"] = app_id;
     QJsonDocument doc(msg);
     return send(QString(doc.toJson(QJsonDocument::Compact)));
 }
 
-bool ReceiverChannel::stop(const QString& session_id) {
+bool ReceiverInterface::stop(const QString& session_id) {
     QJsonObject msg;
     msg["type"] = QStringLiteral("STOP");
-    msg["requestId"] = 1;
+    msg["requestId"] = ++last_request_;
     msg["sessionId"] = session_id;
     QJsonDocument doc(msg);
     return send(QString(doc.toJson(QJsonDocument::Compact)));
 }
 
-bool ReceiverChannel::getStatus() {
+bool ReceiverInterface::getStatus() {
     QJsonObject msg;
     msg["type"] = QStringLiteral("GET_STATUS");
-    msg["requestId"] = 1;
+    msg["requestId"] = ++last_request_;
     QJsonDocument doc(msg);
     return send(QString(doc.toJson(QJsonDocument::Compact)));
 }
 
-void ReceiverChannel::onMessageReceived(const QString& data) {
+void ReceiverInterface::onMessageReceived(const QString& data) {
     qInfo() << "Received message:" << data;
 }
 

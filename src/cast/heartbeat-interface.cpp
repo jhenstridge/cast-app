@@ -16,39 +16,24 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "heartbeat-channel.h"
-#include "channel.h"
+#include "heartbeat-interface.h"
 
 namespace cast {
 
-const QString HeartbeatChannel::URN = QStringLiteral("urn:x-cast:com.google.cast.tp.heartbeat");
+const std::string HeartbeatInterface::URN = "urn:x-cast:com.google.cast.tp.heartbeat";
 
-HeartbeatChannel::HeartbeatChannel(Caster *caster, const QString& source_id,
-                                   const QString& destination_id)
-    : Channel(caster, source_id, destination_id, URN) {
-    connect(caster, &Caster::connected,
-            this, &HeartbeatChannel::onConnected);
-    connect(caster, &Caster::disconnected,
-            this, &HeartbeatChannel::onDisconnected);
+HeartbeatInterface::HeartbeatInterface(Channel *channel)
+    : Interface(channel, URN) {
     connect(&timer_, &QTimer::timeout,
-            this, &HeartbeatChannel::onTimeout);
+            this, &HeartbeatInterface::onTimeout);
     timer_.setInterval(5000);
     timer_.setSingleShot(false);
-}
-
-HeartbeatChannel::~HeartbeatChannel() = default;
-
-void HeartbeatChannel::onConnected()
-{
     timer_.start();
 }
 
-void HeartbeatChannel::onDisconnected()
-{
-    timer_.stop();
-}
+HeartbeatInterface::~HeartbeatInterface() = default;
 
-void HeartbeatChannel::onTimeout()
+void HeartbeatInterface::onTimeout()
 {
     send(R"({"type": "PING"})");
 }

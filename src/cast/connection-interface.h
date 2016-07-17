@@ -18,22 +18,17 @@
 
 #pragma once
 
-#include "channel.h"
+#include "interface.h"
 
 namespace cast {
 
-class ReceiverChannel : public Channel {
+class ConnectionInterface : public Interface {
     Q_OBJECT
 public:
-    ReceiverChannel(Caster *caster, const QString& source_id,
-                     const QString& destination_id);
-    virtual ~ReceiverChannel();
+    ConnectionInterface(Channel *channel);
+    virtual ~ConnectionInterface();
 
-    static const QString URN;
-
-    bool launch(const QString& app_id);
-    bool stop(const QString& session_id);
-    bool getStatus();
+    static const std::string URN;
 
 private Q_SLOTS:
     void onMessageReceived(const QString& data);

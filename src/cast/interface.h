@@ -28,34 +28,31 @@
 
 namespace cast {
 
-class Interface;
+class Channel;
 
-class Channel : public QObject {
+class Interface : public QObject {
     Q_OBJECT
 public:
-    Channel(Caster *caster, const std::string& source_id,
-            const std::string& destination_id);
-    virtual ~Channel();
+    Interface(Channel *channel, const std::string& namespace_);
+    virtual ~Interface();
 
-    Q_INVOKABLE cast::Interface* addInterface(const QString& namespace_);
-    Q_INVOKABLE void close();
+    Q_INVOKABLE bool send(const QString& data);
+    Q_INVOKABLE bool sendBinary(const QByteArray& data);
 
 Q_SIGNALS:
-    void closed();
+    void messageReceived(const QString& data);
+    void binaryMessageReceived(const QByteArray& data);
+
+protected:
+    Channel& channel();
+    const Channel& channel() const;
 
 private:
-    Caster& caster();
-    const Caster& caster() const;
     void handleMessage(const Caster::Message& message);
 
-    const std::string source_id_;
-    const std::string destination_id_;
+    const std::string namespace_;
 
-    bool closed_ = false;
-    std::map<std::string,Interface*> interfaces_;
-
-    friend class Caster;
-    friend class Interface;
+    friend class Channel;
 };
 
 }

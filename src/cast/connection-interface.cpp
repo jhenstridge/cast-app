@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "connection-channel.h"
+#include "connection-interface.h"
 #include "channel.h"
 
 #include <QDebug>
@@ -25,22 +25,18 @@
 
 namespace cast {
 
-const QString ConnectionChannel::URN = QStringLiteral("urn:x-cast:com.google.cast.tp.connection");
+const std::string ConnectionInterface::URN = "urn:x-cast:com.google.cast.tp.connection";
 
-ConnectionChannel::ConnectionChannel(Caster *caster, const QString& source_id,
-                                   const QString& destination_id)
-    : Channel(caster, source_id, destination_id, URN) {
-    connect(this, &Channel::messageReceived,
-            this, &ConnectionChannel::onMessageReceived);
+ConnectionInterface::ConnectionInterface(Channel *channel)
+    : Interface(channel, URN) {
+    connect(this, &Interface::messageReceived,
+            this, &ConnectionInterface::onMessageReceived);
+    send(R"({"type": "CONNECT"})");
 }
 
-ConnectionChannel::~ConnectionChannel() = default;
+ConnectionInterface::~ConnectionInterface() = default;
 
-bool ConnectionChannel::sendConnect() {
-    return send(R"({"type": "CONNECT"})");
-}
-
-void ConnectionChannel::onMessageReceived(const QString& data) {
+void ConnectionInterface::onMessageReceived(const QString& data) {
     QJsonParseError err;
     auto doc = QJsonDocument::fromJson(data.toUtf8(), &err);
     if (err.error != QJsonParseError::NoError) {
@@ -49,7 +45,7 @@ void ConnectionChannel::onMessageReceived(const QString& data) {
         return;
     }
     if (doc.object()["type"].toString() == "CLOSE") {
-        static_cast<Caster*>(parent())->disconnectFromHost();
+        channel().close();
     }
 }
 

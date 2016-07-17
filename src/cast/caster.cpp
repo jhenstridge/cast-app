@@ -17,9 +17,9 @@
 */
 
 #include "caster.h"
-#include "connection-channel.h"
-#include "heartbeat-channel.h"
-#include "receiver-channel.h"
+#include "channel.h"
+#include "heartbeat-interface.h"
+#include "receiver-interface.h"
 
 #include <QtEndian>
 #include <QDebug>
@@ -34,10 +34,6 @@ Caster::Caster(QObject *parent) : QObject(parent) {
             this, &Caster::onReadyRead);
     connect(&socket_, &QIODevice::readChannelFinished,
             this, &Caster::onReadChannelFinished);
-
-    connection_ = new ConnectionChannel(this, "sender-0", "receiver-0");
-    heartbeat_ = new HeartbeatChannel(this, "sender-0", "receiver-0");
-    receiver_ = new ReceiverChannel(this, "sender-0", "receiver-0");
 }
 
 Caster::~Caster() = default;
@@ -46,23 +42,31 @@ void Caster::connectToHost(const QString &host_name, int port) {
     socket_.connectToHostEncrypted(host_name, port);
 }
 
-void Caster::disconnectFromHost() {
-    qInfo() << "Disconnecting";
-    socket_.disconnectFromHost();
-    Q_EMIT disconnected();
-}
-
-Channel* Caster::createChannel(const QString& sender_id,
-                               const QString& destination_id,
-                               const QString& channel_namespace) {
-    return new Channel(this, sender_id, destination_id, channel_namespace);
-}
-
 void Caster::onEncrypted() {
     qInfo() << "Connected";
+    platform_channel_ = createChannel(QStringLiteral("sender-0"),
+                                      QStringLiteral("receiver-0"));
+    platform_channel_->addInterface(
+        QString::fromStdString(HeartbeatInterface::URN));
+    receiver_ = static_cast<ReceiverInterface*>(
+        platform_channel_->addInterface(
+            QString::fromStdString(ReceiverInterface::URN)));
     Q_EMIT connected();
-    connection_->sendConnect();
-    receiver_->launch("YouTube");
+    receiver_->getStatus();
+}
+
+void Caster::disconnectFromHost() {
+    qInfo() << "Disconnecting";
+    // Kill off all the channels
+    platform_channel_ = nullptr;
+    receiver_ = nullptr;
+    for (auto it = channels_.begin(); it != channels_.end(); ++it) {
+        it->second->deleteLater();
+    }
+    channels_.clear();
+    // And disconnect the socket
+    socket_.disconnectFromHost();
+    Q_EMIT disconnected();
 }
 
 void Caster::onReadyRead() {
@@ -96,16 +100,7 @@ void Caster::onReadyRead() {
             if (message_read_ == message_size_) {
                 if (received_message_.ParseFromArray(
                         message_data_.constData(), message_data_.size())) {
-
-    qInfo() << "Received message:";
-    qInfo() << "  source:" << received_message_.source_id().c_str();
-    qInfo() << "  destination:" << received_message_.destination_id().c_str();
-    qInfo() << "  namespace:" << received_message_.namespace_().c_str();
-    if (received_message_.payload_type() == Message::STRING) {
-        qInfo() << "  payload:" << received_message_.payload_utf8().c_str();
-    }
-
-                    Q_EMIT messageReceived(received_message_);
+                    handleMessage(received_message_);
                 } else {
                     qWarning() << "Could not parse incoming message";
                 }
@@ -121,6 +116,64 @@ void Caster::onReadyRead() {
 
 void Caster::onReadChannelFinished() {
     disconnectFromHost();
+}
+
+Channel* Caster::createChannel(const QString& source_id,
+                               const QString& destination_id) {
+    std::string source = source_id.toStdString();
+    std::string destination = destination_id.toStdString();
+
+    Channel *channel;
+    try {
+        channel = channels_.at({destination, source});
+    } catch (const std::out_of_range &) {
+        channel = new Channel(this, source, destination);
+        channels_.emplace(std::make_pair(destination, source), channel);
+        connect(channel, &Channel::closed,
+                this, &Caster::onChannelClosed, Qt::QueuedConnection);
+    }
+    return channel;
+}
+
+void Caster::onChannelClosed() {
+    Channel *c = static_cast<Channel*>(sender());
+
+    channels_.erase({c->destination_id_, c->source_id_});
+    if (c == platform_channel_) {
+        disconnectFromHost();
+    }
+    c->deleteLater();
+}
+
+void Caster::handleMessage(const Message& message) {
+    qInfo() << "Received message:";
+    qInfo() << "  source:" << message.source_id().c_str();
+    qInfo() << "  destination:" << message.destination_id().c_str();
+    qInfo() << "  namespace:" << message.namespace_().c_str();
+    if (message.payload_type() == Message::STRING) {
+        qInfo() << "  payload:" << message.payload_utf8().c_str();
+    }
+
+    if (message.protocol_version() != Caster::Message::CASTV2_1_0) {
+        qWarning() << "Unsupported protocol version:" << message.protocol_version();
+        return;
+    }
+
+    if (message.destination_id() == "*") {
+        // Broadcast message to all channels connected to the sender
+        for (auto it = channels_.lower_bound({message.source_id(), std::string()}); it != channels_.end(); ++it) {
+            if (it->first.first != message.destination_id()) break;
+            it->second->handleMessage(message);
+        }
+    } else {
+        try {
+            channels_.at({message.source_id(), message.destination_id()})->handleMessage(message);
+        } catch (const std::out_of_range &) {
+            qWarning() << "Message received for unknown channel:"
+                       << QString::fromStdString(message.source_id()) << "->"
+                       << QString::fromStdString(message.destination_id());
+        }
+    }
 }
 
 bool Caster::sendMessage(const Message& message) {

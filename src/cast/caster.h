@@ -24,14 +24,14 @@
 #include <QSslSocket>
 
 #include <cstdint>
-#include <memory>
+#include <map>
+#include <string>
+#include <utility>
 
 namespace cast {
 
 class Channel;
-class ConnectionChannel;
-class HeartbeatChannel;
-class ReceiverChannel;
+class ReceiverInterface;
 
 class Caster : public QObject {
     Q_OBJECT
@@ -44,9 +44,8 @@ public:
     Q_INVOKABLE void connectToHost(const QString& host_name, int port);
     Q_INVOKABLE void disconnectFromHost();
 
-    Q_INVOKABLE Channel* createChannel(const QString& sender_id,
-                                       const QString& destination_id,
-                                       const QString& channel_namespace);
+    Q_INVOKABLE Channel* createChannel(const QString& source_id,
+                                       const QString& destination_id);
 
     bool sendMessage(const Message& message);
 
@@ -60,10 +59,14 @@ private Q_SLOTS:
     void onReadyRead();
     void onReadChannelFinished();
 
+    void onChannelClosed();
+
 private:
+    void handleMessage(const Message& message);
+
     QSslSocket socket_;
 
-    /* Manage reading the incoming message */
+    // Manage reading the incoming message
     enum class State { read_header, read_body };
     State read_state_ = State::read_header;
     uint32_t message_size_ = 0;
@@ -71,9 +74,10 @@ private:
     QByteArray message_data_;
     Message received_message_;
 
-    ConnectionChannel *connection_;
-    HeartbeatChannel *heartbeat_;
-    ReceiverChannel *receiver_;
+    // Manage communication channels
+    std::map<std::pair<std::string,std::string>,Channel*> channels_;
+    Channel *platform_channel_ = nullptr;
+    ReceiverInterface *receiver_ = nullptr;
 };
 
 }

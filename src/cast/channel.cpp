@@ -17,62 +17,70 @@
 */
 
 #include "channel.h"
+#include "interface.h"
+#include "connection-interface.h"
+#include "heartbeat-interface.h"
+#include "receiver-interface.h"
 
 namespace cast {
 
-Channel::Channel(Caster *caster, const QString& source_id,
-                 const QString& destination_id,
-                 const QString& channel_namespace)
+Channel::Channel(Caster *caster, const std::string& source_id,
+                 const std::string& destination_id)
     : QObject(caster), source_id_(source_id),
-      destination_id_(destination_id), namespace_(channel_namespace) {
-    connect(caster, &Caster::messageReceived,
-            this, &Channel::onMessageReceived);
+      destination_id_(destination_id) {
+    addInterface(QString::fromStdString(ConnectionInterface::URN));
 }
 
 Channel::~Channel() = default;
 
-bool Channel::send(const QString& data) {
-    Caster::Message message;
+cast::Interface* Channel::addInterface(const QString& namespace_) {
+    std::string ns = namespace_.toStdString();
+    Interface *iface;
 
-    message.set_protocol_version(Caster::Message::CASTV2_1_0);
-    message.set_source_id(source_id_.toStdString());
-    message.set_destination_id(destination_id_.toStdString());
-    message.set_namespace_(namespace_.toStdString());
-    message.set_payload_type(Caster::Message::STRING);
-    message.set_payload_utf8(data.toStdString());
-    return static_cast<Caster*>(parent())->sendMessage(message);
-}
-
-bool Channel::sendBinary(const QByteArray& data) {
-    Caster::Message message;
-
-    message.set_protocol_version(Caster::Message::CASTV2_1_0);
-    message.set_source_id(source_id_.toStdString());
-    message.set_destination_id(destination_id_.toStdString());
-    message.set_namespace_(namespace_.toStdString());
-    message.set_payload_type(Caster::Message::BINARY);
-    message.set_payload_binary(data.constData(), data.size());
-    return static_cast<Caster*>(parent())->sendMessage(message);
-}
-
-void Channel::onMessageReceived(const Caster::Message& message) {
-    if (message.protocol_version() != Caster::Message::CASTV2_1_0) return;
-    if (message.source_id() != destination_id_.toStdString()) return;
-    if (!(message.destination_id() == "*" ||
-          message.destination_id() == source_id_.toStdString())) return;
-    if (message.namespace_() != namespace_.toStdString()) return;
-
-    switch (message.payload_type()) {
-    case Caster::Message::STRING:
-        Q_EMIT messageReceived(QString::fromStdString(message.payload_utf8()));
-        break;
-    case Caster::Message::BINARY: {
-        const auto& data = message.payload_binary();
-        Q_EMIT binaryMessageReceived(QByteArray(&data[0], data.size()));
-        break;
+    try {
+        iface = interfaces_.at(ns);
+    } catch (const std::out_of_range &) {
+        // TODO: add some kind of registration system
+        if (ns == ConnectionInterface::URN) {
+            iface = new ConnectionInterface(this);
+        } else if (ns == HeartbeatInterface::URN) {
+            iface = new HeartbeatInterface(this);
+        } else if (ns == ReceiverInterface::URN) {
+            iface = new ReceiverInterface(this);
+        } else {
+            iface = new Interface(this, ns);
+        }
+        interfaces_.emplace(ns, iface);
     }
-    default:
-        break;
+    return iface;
+}
+
+void Channel::close() {
+    if (closed_) return;
+    closed_ = true;
+
+    for (auto it = interfaces_.begin(); it != interfaces_.end(); ++it) {
+        it->second->deleteLater();
+    }
+    interfaces_.clear();
+
+    Q_EMIT closed();
+}
+
+Caster& Channel::caster() {
+    return *static_cast<Caster*>(parent());
+}
+
+const Caster& Channel::caster() const {
+    return *static_cast<const Caster*>(parent());
+}
+
+void Channel::handleMessage(const Caster::Message& message) {
+    try {
+        interfaces_.at(message.namespace_())->handleMessage(message);
+    } catch (const std::out_of_range &) {
+        qWarning() << "Message received for unknown namespace:"
+                   << QString::fromStdString(message.namespace_());
     }
 }
 
