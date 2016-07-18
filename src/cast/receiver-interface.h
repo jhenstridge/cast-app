@@ -19,11 +19,16 @@
 #pragma once
 
 #include "interface.h"
+#include <QVariantList>
 
 namespace cast {
 
 class ReceiverInterface : public Interface {
     Q_OBJECT
+    Q_PROPERTY(QVariantList applications READ applications NOTIFY statusChanged)
+    Q_PROPERTY(bool isActiveInput READ isActiveInput NOTIFY statusChanged)
+    Q_PROPERTY(double volumeLevel READ volumeLevel NOTIFY statusChanged)
+    Q_PROPERTY(bool volumeMuted READ volumeMuted NOTIFY statusChanged)
 public:
     ReceiverInterface(Channel *channel);
     virtual ~ReceiverInterface();
@@ -34,11 +39,24 @@ public:
     bool stop(const QString& session_id);
     bool getStatus();
 
+Q_SIGNALS:
+    void statusChanged();
+
 private Q_SLOTS:
     void onMessageReceived(const QString& data);
 
 private:
+    QVariantList applications() const { return applications_; }
+    bool isActiveInput() const { return is_active_input_; }
+    double volumeLevel() const { return volume_level_; }
+    bool volumeMuted() const { return volume_muted_; }
+
     int last_request_ = 0;
+
+    QVariantList applications_;
+    bool is_active_input_ = false;
+    double volume_level_ = 1.0;
+    bool volume_muted_ = false;
 };
 
 }

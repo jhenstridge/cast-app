@@ -49,8 +49,8 @@ void Caster::onEncrypted() {
     platform_channel_->addInterface(HeartbeatInterface::URN);
     receiver_ = static_cast<ReceiverInterface*>(
         platform_channel_->addInterface(ReceiverInterface::URN));
+    Q_EMIT receiverChanged();
     Q_EMIT connected();
-    receiver_->getStatus();
 }
 
 void Caster::disconnectFromHost() {
@@ -58,6 +58,7 @@ void Caster::disconnectFromHost() {
     // Kill off all the channels
     platform_channel_ = nullptr;
     receiver_ = nullptr;
+    Q_EMIT receiverChanged();
     for (auto it = channels_.begin(); it != channels_.end(); ++it) {
         it->second->deleteLater();
     }

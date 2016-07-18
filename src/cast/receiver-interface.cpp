@@ -21,6 +21,7 @@
 #include <QDebug>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QJsonArray>
 
 namespace cast {
 
@@ -30,6 +31,7 @@ ReceiverInterface::ReceiverInterface(Channel *channel)
     : Interface(channel, URN) {
     connect(this, &Interface::messageReceived,
             this, &ReceiverInterface::onMessageReceived);
+    getStatus();
 }
 
 ReceiverInterface::~ReceiverInterface() = default;
@@ -61,7 +63,39 @@ bool ReceiverInterface::getStatus() {
 }
 
 void ReceiverInterface::onMessageReceived(const QString& data) {
-    qInfo() << "Received message:" << data;
+    QJsonParseError err;
+    auto doc = QJsonDocument::fromJson(data.toUtf8(), &err);
+    if (err.error != QJsonParseError::NoError) {
+        qWarning() << "Could not parse message on connection channel:"
+                   << err.errorString();
+        return;
+    }
+    if (doc.object()["type"].toString() != "RECEIVER_STATUS") return;
+
+    const auto status = doc.object()["status"].toObject();
+    applications_.clear();
+    for (const auto& item : status["applications"].toArray()) {
+        const auto obj = item.toObject();
+        QVariantMap app;
+        app["appId"] = obj["appId"].toString();
+        app["displayName"] = obj["displayName"].toString();
+        QStringList namespaces;
+        for (const auto& n : obj["namespaces"].toArray()) {
+            namespaces.push_back(n.toString());
+        }
+        app["namespaces"] = namespaces;
+        app["sessionId"] = obj["sessionId"].toString();
+        app["statusText"] = obj["statusText"].toString();
+        app["transportId"] = obj["transportId"].toString();
+        app["isIdleScreen"] = obj["isIdleScreen"].toBool();
+        applications_.push_back(std::move(app));
+    }
+    is_active_input_ = status["isActiveInput"].toBool();
+    const auto volume = status["volume"].toObject();
+    volume_level_ = volume["level"].toDouble();
+    volume_muted_ = volume["muted"].toBool();
+
+    Q_EMIT statusChanged();
 }
 
 }

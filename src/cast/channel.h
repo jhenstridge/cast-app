@@ -29,6 +29,8 @@ class Interface;
 
 class Channel : public QObject {
     Q_OBJECT
+    Q_PROPERTY(QString sourceId READ sourceId CONSTANT)
+    Q_PROPERTY(QString destinationId READ destinationId CONSTANT)
 public:
     Channel(Caster *caster, const QString& source_id,
             const QString& destination_id);
@@ -44,6 +46,8 @@ private:
     Caster& caster();
     const Caster& caster() const;
     void handleMessage(const Caster::Message& message);
+    const QString& sourceId() const { return source_id_; }
+    const QString& destinationId() const { return destination_id_; }
 
     const QString source_id_;
     const QString destination_id_;

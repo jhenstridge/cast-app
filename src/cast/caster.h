@@ -34,6 +34,7 @@ class ReceiverInterface;
 
 class Caster : public QObject {
     Q_OBJECT
+    Q_PROPERTY(cast::ReceiverInterface* receiver READ receiver NOTIFY receiverChanged)
 public:
     typedef extensions::api::cast_channel::CastMessage Message;
 
@@ -52,6 +53,8 @@ Q_SIGNALS:
     void connected();
     void disconnected();
 
+    void receiverChanged();
+
 private Q_SLOTS:
     void onEncrypted();
     void onReadyRead();
@@ -61,6 +64,7 @@ private Q_SLOTS:
 
 private:
     void handleMessage(const Message& message);
+    cast::ReceiverInterface* receiver() const { return receiver_; }
 
     QSslSocket socket_;
 

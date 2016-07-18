@@ -30,6 +30,7 @@ class Channel;
 
 class Interface : public QObject {
     Q_OBJECT
+    Q_PROPERTY(QString namespace READ getNamespace CONSTANT)
 public:
     Interface(Channel *channel, const QString& ns);
     virtual ~Interface();
@@ -47,6 +48,7 @@ protected:
 
 private:
     void handleMessage(const Caster::Message& message);
+    const QString& getNamespace() const { return namespace_; }
 
     const QString namespace_;
 
