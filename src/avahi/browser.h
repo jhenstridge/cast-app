@@ -26,7 +26,7 @@
 #include <memory>
 #include <vector>
 
-namespace cast {
+namespace avahi {
 
 class Browser : public QAbstractListModel {
     Q_OBJECT

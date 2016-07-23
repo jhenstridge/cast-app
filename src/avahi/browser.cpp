@@ -25,7 +25,7 @@
 #include <stdexcept>
 #include <string>
 
-namespace cast {
+namespace avahi {
 
 struct Browser::Service {
     QString service_name;

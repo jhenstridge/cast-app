@@ -17,21 +17,12 @@
 */
 
 #include "plugin.h"
-#include "caster.h"
-#include "channel.h"
-#include "interface.h"
-#include "receiver-interface.h"
+#include "browser.h"
 
-namespace cast {
+namespace avahi {
 
-void CastPlugin::registerTypes(const char *uri) {
-    qmlRegisterType<Caster>(uri, 0, 1, "Caster");
-    qmlRegisterUncreatableType<Channel>(
-        uri, 0, 1, "Channel", "Use a Caster to create channels");
-    qmlRegisterUncreatableType<Interface>(
-        uri, 0, 1, "Interface", "Use a Channel to create interfaces");
-    qmlRegisterUncreatableType<ReceiverInterface>(
-        uri, 0, 1, "ReceiverInterface", "Use a Channel to create interfaces");
+void AvahiPlugin::registerTypes(const char *uri) {
+    qmlRegisterType<Browser>(uri, 0, 1, "Browser");
 }
 
 }

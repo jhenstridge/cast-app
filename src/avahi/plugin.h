@@ -16,22 +16,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "plugin.h"
-#include "caster.h"
-#include "channel.h"
-#include "interface.h"
-#include "receiver-interface.h"
+#pragma once
 
-namespace cast {
+#include <QtQml>
 
-void CastPlugin::registerTypes(const char *uri) {
-    qmlRegisterType<Caster>(uri, 0, 1, "Caster");
-    qmlRegisterUncreatableType<Channel>(
-        uri, 0, 1, "Channel", "Use a Caster to create channels");
-    qmlRegisterUncreatableType<Interface>(
-        uri, 0, 1, "Interface", "Use a Channel to create interfaces");
-    qmlRegisterUncreatableType<ReceiverInterface>(
-        uri, 0, 1, "ReceiverInterface", "Use a Channel to create interfaces");
-}
+namespace avahi {
+
+class AvahiPlugin : public QQmlExtensionPlugin {
+    Q_OBJECT
+    Q_PLUGIN_METADATA(IID "org.qt-project.Qt.QQmlExtensionInterface")
+
+public:
+    virtual void registerTypes(const char *uri) override;
+};
 
 }

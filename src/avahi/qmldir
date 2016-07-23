@@ -1,0 +1,2 @@
+module avahi
+plugin avahi-qml
