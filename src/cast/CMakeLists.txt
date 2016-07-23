@@ -14,6 +14,7 @@ add_library(cast-qml MODULE
   connection-interface.cpp
   heartbeat-interface.cpp
   receiver-interface.cpp
+  media-interface.cpp
   ${generated_sources}
   ${generated_headers}
   )

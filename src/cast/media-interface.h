@@ -23,21 +23,19 @@
 
 namespace cast {
 
-class ReceiverInterface : public Interface {
+class MediaInterface : public Interface {
     Q_OBJECT
-    Q_PROPERTY(QVariantList applications READ applications NOTIFY statusChanged)
-    Q_PROPERTY(bool isActiveInput READ isActiveInput NOTIFY statusChanged)
-    Q_PROPERTY(double volumeLevel READ volumeLevel NOTIFY statusChanged)
-    Q_PROPERTY(bool volumeMuted READ volumeMuted NOTIFY statusChanged)
+    Q_PROPERTY(QVariantList status READ status NOTIFY statusChanged)
 public:
-    ReceiverInterface(Channel *channel);
-    virtual ~ReceiverInterface();
+    MediaInterface(Channel *channel);
+    virtual ~MediaInterface();
 
     static const QString URN;
 
-    Q_INVOKABLE bool launch(const QString& app_id);
-    Q_INVOKABLE bool stop(const QString& session_id);
     bool getStatus();
+    Q_INVOKABLE bool play(int media_session_id);
+    Q_INVOKABLE bool pause(int media_session_id);
+    Q_INVOKABLE bool stop(int media_session_id);
 
 Q_SIGNALS:
     void statusChanged();
@@ -46,17 +44,11 @@ private Q_SLOTS:
     void onMessageReceived(const QString& data);
 
 private:
-    QVariantList applications() const { return applications_; }
-    bool isActiveInput() const { return is_active_input_; }
-    double volumeLevel() const { return volume_level_; }
-    bool volumeMuted() const { return volume_muted_; }
+    QVariantList status() const { return status_; }
 
     int last_request_ = 0;
 
-    QVariantList applications_;
-    bool is_active_input_ = false;
-    double volume_level_ = 1.0;
-    bool volume_muted_ = false;
+    QVariantList status_;
 };
 
 }

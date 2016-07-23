@@ -21,6 +21,7 @@
 #include "connection-interface.h"
 #include "heartbeat-interface.h"
 #include "receiver-interface.h"
+#include "media-interface.h"
 
 namespace cast {
 
@@ -46,6 +47,8 @@ cast::Interface* Channel::addInterface(const QString& ns) {
             iface = new HeartbeatInterface(this);
         } else if (ns == ReceiverInterface::URN) {
             iface = new ReceiverInterface(this);
+        } else if (ns == MediaInterface::URN) {
+            iface = new MediaInterface(this);
         } else {
             iface = new Interface(this, ns);
         }
