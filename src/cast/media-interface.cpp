@@ -36,6 +36,14 @@ MediaInterface::MediaInterface(Channel *channel)
 
 MediaInterface::~MediaInterface() = default;
 
+bool MediaInterface::getStatus() {
+    QJsonObject msg;
+    msg["type"] = QStringLiteral("GET_STATUS");
+    msg["requestId"] = ++last_request_;
+    QJsonDocument doc(msg);
+    return send(QString(doc.toJson(QJsonDocument::Compact)));
+}
+
 bool MediaInterface::play(int media_session_id) {
     QJsonObject msg;
     msg["type"] = QStringLiteral("PLAY");
@@ -63,12 +71,8 @@ bool MediaInterface::stop(int media_session_id) {
     return send(QString(doc.toJson(QJsonDocument::Compact)));
 }
 
-bool MediaInterface::getStatus() {
-    QJsonObject msg;
-    msg["type"] = QStringLiteral("GET_STATUS");
-    msg["requestId"] = ++last_request_;
-    QJsonDocument doc(msg);
-    return send(QString(doc.toJson(QJsonDocument::Compact)));
+bool MediaInterface::load() {
+    return false;
 }
 
 void MediaInterface::onMessageReceived(const QString& data) {

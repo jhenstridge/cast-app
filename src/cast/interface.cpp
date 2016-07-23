@@ -36,6 +36,12 @@ const Channel& Interface::channel() const {
 }
 
 bool Interface::send(const QString& data) {
+#if 0
+    qDebug() << "Sending message" << channel().source_id_
+             << "->" << channel().destination_id_
+             << "namespace" << namespace_
+             << "data" << data;
+#endif
     Caster::Message message;
     message.set_protocol_version(Caster::Message::CASTV2_1_0);
     message.set_source_id(channel().source_id_.toStdString());
@@ -60,6 +66,12 @@ bool Interface::sendBinary(const QByteArray& data) {
 void Interface::handleMessage(const Caster::Message& message) {
     switch (message.payload_type()) {
     case Caster::Message::STRING:
+#if 0
+        qDebug() << "Received message" << QString::fromStdString(message.source_id())
+                 << "->" << QString::fromStdString(message.destination_id())
+                 << "namespace" << QString::fromStdString(message.namespace_())
+                 << "data" << QString::fromStdString(message.payload_utf8());
+#endif
         Q_EMIT messageReceived(QString::fromStdString(message.payload_utf8()));
         break;
     case Caster::Message::BINARY: {

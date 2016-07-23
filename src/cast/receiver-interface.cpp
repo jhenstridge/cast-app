@@ -73,23 +73,7 @@ void ReceiverInterface::onMessageReceived(const QString& data) {
     if (doc.object()["type"].toString() != "RECEIVER_STATUS") return;
 
     const auto status = doc.object()["status"].toObject();
-    applications_.clear();
-    for (const auto& item : status["applications"].toArray()) {
-        const auto obj = item.toObject();
-        QVariantMap app;
-        app["appId"] = obj["appId"].toString();
-        app["displayName"] = obj["displayName"].toString();
-        QStringList namespaces;
-        for (const auto& n : obj["namespaces"].toArray()) {
-            namespaces.push_back(n.toString());
-        }
-        app["namespaces"] = namespaces;
-        app["sessionId"] = obj["sessionId"].toString();
-        app["statusText"] = obj["statusText"].toString();
-        app["transportId"] = obj["transportId"].toString();
-        app["isIdleScreen"] = obj["isIdleScreen"].toBool();
-        applications_.push_back(std::move(app));
-    }
+    applications_ = status["applications"].toArray().toVariantList();
     is_active_input_ = status["isActiveInput"].toBool();
     const auto volume = status["volume"].toObject();
     volume_level_ = volume["level"].toDouble();

@@ -37,6 +37,8 @@ public:
     Q_INVOKABLE bool pause(int media_session_id);
     Q_INVOKABLE bool stop(int media_session_id);
 
+    Q_INVOKABLE bool load();
+
 Q_SIGNALS:
     void statusChanged();
 

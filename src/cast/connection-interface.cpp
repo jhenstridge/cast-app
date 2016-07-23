@@ -45,6 +45,9 @@ void ConnectionInterface::onMessageReceived(const QString& data) {
         return;
     }
     if (doc.object()["type"].toString() == "CLOSE") {
+#if 0
+        qWarning() << "Received close message from channel";
+#endif
         channel().close();
     }
 }
