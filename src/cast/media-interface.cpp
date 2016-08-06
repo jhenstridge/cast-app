@@ -71,8 +71,12 @@ bool MediaInterface::stop(int media_session_id) {
     return send(QString(doc.toJson(QJsonDocument::Compact)));
 }
 
-bool MediaInterface::load() {
-    return false;
+bool MediaInterface::load(const QVariantMap& request) {
+    auto msg = QJsonObject::fromVariantMap(request);
+    msg["type"] = QStringLiteral("LOAD");
+    msg["requestId"] = ++last_request_;
+    JSonDocument doc(msg);
+    return send(QString(doc.toJson(JsonDocument::Compact)));
 }
 
 void MediaInterface::onMessageReceived(const QString& data) {

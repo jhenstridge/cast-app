@@ -37,7 +37,7 @@ public:
     Q_INVOKABLE bool pause(int media_session_id);
     Q_INVOKABLE bool stop(int media_session_id);
 
-    Q_INVOKABLE bool load();
+    Q_INVOKABLE bool load(const QVariantMap& request);
 
 Q_SIGNALS:
     void statusChanged();
